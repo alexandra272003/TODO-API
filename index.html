@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo API Studio</title>
+  <style>
+    :root{
+      --bg:#080d19; --panel:#10182b; --panel2:#0c1425; --line:#22304a;
+      --text:#f4f7ff; --muted:#8f9bb5; --purple:#8067ff; --cyan:#31d6e8;
+      --green:#38d996; --red:#ff6f8f; --yellow:#ffc857;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(128,103,255,.22), transparent 32%),
+        radial-gradient(circle at 100% 0%, rgba(49,214,232,.13), transparent 28%),
+        var(--bg);
+    }
+    .shell{width:min(1280px,94%);margin:auto;padding:28px 0 55px}
+    header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:22px}
+    .eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:900;color:var(--cyan)}
+    h1{font-size:clamp(30px,5vw,54px);line-height:1;margin:8px 0 10px;letter-spacing:-.045em}
+    .sub{color:var(--muted);max-width:760px;line-height:1.55;margin:0}
+    .status{
+      display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(16,24,43,.8);
+      border-radius:999px;padding:10px 13px;font-size:12px;font-weight:800;white-space:nowrap
+    }
+    .dot{width:9px;height:9px;border-radius:50%;background:#64748b}
+    .dot.ok{background:var(--green);box-shadow:0 0 13px rgba(56,217,150,.65)}
+    .dot.bad{background:var(--red)}
+    .layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px}
+    .card{
+      background:linear-gradient(180deg,rgba(16,24,43,.95),rgba(12,20,37,.96));
+      border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 16px 60px rgba(0,0,0,.2)
+    }
+    .card h2{font-size:18px;margin:0 0 5px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 15px}
+    label{display:block;font-size:11px;font-weight:900;color:#c6d0e6;margin:13px 0 7px}
+    input,textarea,select{
+      width:100%;border:1px solid var(--line);outline:none;background:#091221;color:var(--text);
+      border-radius:11px;padding:11px 12px;font:inherit;font-size:13px
+    }
+    input:focus,textarea:focus,select:focus{border-color:rgba(128,103,255,.85);box-shadow:0 0 0 3px rgba(128,103,255,.12)}
+    textarea{min-height:88px;resize:vertical}
+    .example{color:#73809b;font-size:10px;margin-top:5px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .check{display:flex;align-items:center;gap:9px;font-size:12px;color:#c6d0e6;margin-top:12px}
+    .check input{width:auto;accent-color:var(--purple)}
+    .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    button{
+      border:0;color:#fff;background:linear-gradient(135deg,var(--purple),#5f7dff);
+      border-radius:10px;padding:10px 12px;font-weight:900;font-size:12px;cursor:pointer
+    }
+    button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    button.secondary{background:#22304b}
+    button.danger{background:rgba(255,111,143,.12);color:#ff9db2;border:1px solid rgba(255,111,143,.2)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .toolbar button{flex:1;min-width:125px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+    .stat{background:#091221;border:1px solid var(--line);border-radius:14px;padding:13px}
+    .stat span{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+    .stat b{display:block;font-size:23px;margin-top:3px}
+    .todo-list{display:grid;gap:9px}
+    .todo{
+      display:flex;gap:12px;align-items:flex-start;background:#091221;border:1px solid var(--line);
+      border-radius:14px;padding:13px
+    }
+    .todo.done{opacity:.62}
+    .id{
+      width:38px;height:38px;flex:none;border-radius:10px;background:rgba(128,103,255,.12);
+      display:grid;place-items:center;color:#b9adff;font-weight:900;font-size:11px
+    }
+    .main{min-width:0;flex:1}
+    .title{font-size:14px;font-weight:900;margin-bottom:4px}
+    .desc{font-size:12px;line-height:1.45;color:var(--muted);word-break:break-word}
+    .badge{
+      display:inline-block;margin-top:8px;padding:4px 7px;border-radius:99px;background:rgba(255,255,255,.06);
+      color:#9dacbf;font-size:9px;font-weight:900;text-transform:uppercase
+    }
+    .badge.done{background:rgba(56,217,150,.10);color:#72f0b4}
+    .todo-actions{display:flex;gap:5px}
+    .icon{padding:7px 9px;font-size:11px;background:#1c2942}
+    .empty{text-align:center;border:1px dashed var(--line);border-radius:14px;padding:35px 15px;color:var(--muted);font-size:13px}
+    .response{
+      margin-top:15px;background:#070d17;border:1px solid var(--line);border-radius:14px;overflow:hidden
+    }
+    .response-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .response-head span{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.09em;color:var(--cyan)}
+    pre{margin:0;padding:12px;max-height:280px;overflow:auto;font-size:11px;line-height:1.55;color:#cfe3ff;white-space:pre-wrap;word-break:break-word}
+    .docs{margin-top:18px}
+    .endpoint{
+      display:flex;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px
+    }
+    .method{width:49px;text-align:center;padding:4px 5px;border-radius:6px;font-weight:900;font-size:9px;background:#1c2942}
+    .method.post{color:#72f0b4;background:rgba(56,217,150,.09)}
+    .method.put{color:#84b7ff;background:rgba(132,183,255,.09)}
+    .method.delete{color:#ff9db2;background:rgba(255,111,143,.09)}
+    .method.get{color:#a9a2ff;background:rgba(128,103,255,.09)}
+    .path{font-family:ui-monospace,Consolas,monospace;color:#cad3e7}
+    .base{display:flex;gap:8px}
+    .base input{flex:1}
+    .mini{padding:9px 10px}
+    .toast{
+      position:fixed;right:18px;bottom:18px;max-width:360px;padding:11px 14px;border-radius:11px;
+      background:#18243b;border:1px solid var(--line);box-shadow:0 15px 40px rgba(0,0,0,.3);
+      font-size:12px;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s
+    }
+    .toast.show{opacity:1;transform:none}
+    .toast.bad{border-color:rgba(255,111,143,.45)}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}}
+    @media(max-width:540px){.row{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.todo-actions{flex-direction:column}.shell{width:93%}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div>
+      <div class="eyebrow">FastAPI • CRUD Playground</div>
+      <h1>Todo API Studio</h1>
+      <p class="sub">A clean frontend for your Todo API. Every field includes an example, validation prevents common mistakes, and every API response is visible.</p>
+    </div>
+    <div class="status"><span id="dot" class="dot"></span><span id="statusText">Checking API…</span></div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="card">
+        <h2>API connection</h2>
+        <p class="hint">Point this UI at the FastAPI server running your <code>/todos</code> endpoints.</p>
+        <div class="base">
+          <input id="baseUrl" value="http://127.0.0.1:8000" aria-label="API base URL">
+          <button class="mini" onclick="testConnection()">Test</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h2 id="formHeading">Create a Todo</h2>
+        <p class="hint">The API expects <b>id</b>, <b>title</b>, <b>description</b>, and <b>completed</b>.</p>
+
+        <label for="todoId">ID</label>
+        <input id="todoId" type="number" min="1" step="1" placeholder="Example: 101">
+        <div class="example">Use a unique positive integer, e.g. <b>101</b>. Duplicate IDs are rejected by the API.</div>
+
+        <label for="title">Title</label>
+        <input id="title" maxlength="120" placeholder="Example: Finish NLP assignment">
+
+        <label for="description">Description</label>
+        <textarea id="description" maxlength="500" placeholder="Example: Revise TF-IDF, cosine similarity, and POS tagging."></textarea>
+
+        <label for="completed">Completed</label>
+        <select id="completed">
+          <option value="false">false — still pending</option>
+          <option value="true">true — completed</option>
+        </select>
+        <div class="example">Send a real boolean. Do not type "yes", "done", or "0/1".</div>
+
+        <div class="buttons">
+          <button id="submitBtn" onclick="submitTodo()">Create Todo</button>
+          <button class="secondary" onclick="clearForm()">Clear</button>
+          <button class="secondary" id="cancelEdit" style="display:none" onclick="cancelEdit()">Cancel Edit</button>
+        </div>
+
+        <div class="response">
+          <div class="response-head"><span>Last API response</span><button class="secondary mini" onclick="copyResponse()">Copy</button></div>
+          <pre id="responseBox">No request yet.</pre>
+        </div>
+      </div>
+
+      <div class="card docs">
+        <h2>Endpoint guide</h2>
+        <p class="hint">Use these examples to understand exactly what this frontend calls.</p>
+        <div class="endpoint"><span class="method get">GET</span><span class="path">/todos</span><span>all todos</span></div>
+        <div class="endpoint"><span class="method get">GET</span><span class="path">/todos/completed</span><span>completed only</span></div>
+        <div class="endpoint"><span class="method post">POST</span><span class="path">/todos</span><span>create</span></div>
+        <div class="endpoint"><span class="method get">GET</span><span class="path">/todos/{id}</span><span>one todo</span></div>
+        <div class="endpoint"><span class="method put">PUT</span><span class="path">/todos/{id}</span><span>replace/update</span></div>
+        <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/todos/{id}</span><span>delete</span></div>
+      </div>
+    </aside>
+
+    <main class="card">
+      <div class="toolbar">
+        <button onclick="loadTodos()">Refresh All</button>
+        <button class="secondary" onclick="loadCompleted()">Completed Only</button>
+        <button class="secondary" onclick="getOnePrompt()">Find by ID</button>
+        <button class="secondary" onclick="clearResults()">Clear Results</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Total</span><b id="totalCount">0</b></div>
+        <div class="stat"><span>Completed</span><b id="doneCount">0</b></div>
+        <div class="stat"><span>Pending</span><b id="pendingCount">0</b></div>
+      </div>
+
+      <div id="todoList" class="todo-list">
+        <div class="empty">No todos loaded. Click <b>Refresh All</b> to fetch the current API data.</div>
+      </div>
+
+      <div class="response">
+        <div class="response-head"><span>Full JSON result</span><button class="secondary mini" onclick="copyResult()">Copy</button></div>
+        <pre id="resultBox">[]</pre>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  let editId = null;
+  let latestResponse = null;
+  let currentTodos = [];
+
+  const $ = id => document.getElementById(id);
+
+  function api(path) {
+    return $('baseUrl').value.trim().replace(/\/+$/, '') + path;
+  }
+
+  function showToast(message, bad=false) {
+    const t = $('toast');
+    t.textContent = message;
+    t.className = 'toast show' + (bad ? ' bad' : '');
+    clearTimeout(window.__toast);
+    window.__toast = setTimeout(() => t.className='toast', 2400);
+  }
+
+  function displayResponse(data, status='') {
+    latestResponse = data;
+    $('responseBox').textContent = status + (status ? '\n\n' : '') + JSON.stringify(data, null, 2);
+  }
+
+  function displayResult(data) {
+    latestResponse = data;
+    $('resultBox').textContent = JSON.stringify(data, null, 2);
+  }
+
+  async function request(path, options={}) {
+    try {
+      const res = await fetch(api(path), {
+        headers: {'Content-Type':'application/json', ...(options.headers||{})},
+        ...options
+      });
+      const text = await res.text();
+      let data;
+      try { data = text ? JSON.parse(text) : null; }
+      catch { data = text; }
+      displayResponse(data, `HTTP ${res.status} ${res.statusText}`);
+      if (!res.ok) throw new Error(typeof data === 'object' ? JSON.stringify(data) : String(data));
+      return data;
+    } catch (err) {
+      displayResponse({error: err.message});
+      throw err;
+    }
+  }
+
+  async function testConnection() {
+    try {
+      await request('/');
+      $('dot').className = 'dot ok';
+      $('statusText').textContent = 'API connected';
+      showToast('FastAPI is reachable');
+    } catch {
+      $('dot').className = 'dot bad';
+      $('statusText').textContent = 'API unavailable';
+      showToast('Could not reach FastAPI', true);
+    }
+  }
+
+  function validateForm() {
+    const id = Number($('todoId').value);
+    const title = $('title').value.trim();
+    const description = $('description').value.trim();
+    if (!Number.isInteger(id) || id < 1) throw new Error('ID must be a positive whole number. Example: 101');
+    if (!title) throw new Error('Title is required. Example: Finish NLP assignment');
+    if (!description) throw new Error('Description is required. Example: Revise TF-IDF concepts');
+    return {id, title, description, completed: $('completed').value === 'true'};
+  }
+
+  async function submitTodo() {
+    try {
+      const todo = validateForm();
+      const data = editId === null
+        ? await request('/todos', {method:'POST', body:JSON.stringify(todo)})
+        : await request(`/todos/${editId}`, {method:'PUT', body:JSON.stringify(todo)});
+      showToast(editId === null ? 'Todo created' : 'Todo updated');
+      clearForm();
+      await loadTodos(false);
+      displayResponse(data, 'Success');
+    } catch (e) {
+      if (e.message) showToast(e.message, true);
+    }
+  }
+
+  async function loadTodos(showMessage=true) {
+    try {
+      const data = await request('/todos');
+      currentTodos = Array.isArray(data) ? data : [];
+      renderTodos(currentTodos);
+      displayResult(data);
+      if (showMessage) showToast(`Loaded ${currentTodos.length} todo(s)`);
+    } catch { renderTodos([]); }
+  }
+
+  async function loadCompleted() {
+    try {
+      const data = await request('/todos/completed');
+      currentTodos = Array.isArray(data) ? data : [];
+      renderTodos(currentTodos);
+      displayResult(data);
+      showToast(`Loaded ${currentTodos.length} completed todo(s)`);
+    } catch { renderTodos([]); }
+  }
+
+  async function getOnePrompt() {
+    const value = prompt('Enter Todo ID (example: 101):');
+    if (value === null) return;
+    const id = Number(value);
+    if (!Number.isInteger(id) || id < 1) return showToast('Enter a positive whole-number ID', true);
+    try {
+      const data = await request(`/todos/${id}`);
+      renderTodos([data]);
+      displayResult(data);
+      showToast(`Found Todo #${id}`);
+    } catch { renderTodos([]); }
+  }
+
+  async function deleteTodo(id) {
+    if (!confirm(`Delete Todo #${id}?`)) return;
+    try {
+      const data = await request(`/todos/${id}`, {method:'DELETE'});
+      showToast(`Todo #${id} deleted`);
+      displayResult(data);
+      await loadTodos(false);
+    } catch {}
+  }
+
+  function startEdit(todo) {
+    editId = todo.id;
+    $('formHeading').textContent = `Edit Todo #${todo.id}`;
+    $('submitBtn').textContent = 'Update Todo';
+    $('cancelEdit').style.display = 'inline-block';
+    $('todoId').value = todo.id;
+    $('todoId').disabled = true;
+    $('title').value = todo.title ?? '';
+    $('description').value = todo.description ?? '';
+    $('completed').value = String(Boolean(todo.completed));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function cancelEdit() {
+    clearForm();
+  }
+
+  function clearForm() {
+    editId = null;
+    $('formHeading').textContent = 'Create a Todo';
+    $('submitBtn').textContent = 'Create Todo';
+    $('cancelEdit').style.display = 'none';
+    $('todoId').disabled = false;
+    $('todoId').value = '';
+    $('title').value = '';
+    $('description').value = '';
+    $('completed').value = 'false';
+  }
+
+  function renderTodos(todos) {
+    const list = $('todoList');
+    if (!todos.length) {
+      list.innerHTML = '<div class="empty">No todos found for this view.</div>';
+    } else {
+      list.innerHTML = todos.map(todo => `
+        <div class="todo ${todo.completed ? 'done' : ''}">
+          <div class="id">#${escapeHtml(todo.id)}</div>
+          <div class="main">
+            <div class="title">${escapeHtml(todo.title)}</div>
+            <div class="desc">${escapeHtml(todo.description)}</div>
+            <span class="badge ${todo.completed ? 'done' : ''}">${todo.completed ? 'Completed' : 'Pending'}</span>
+          </div>
+          <div class="todo-actions">
+            <button class="icon" onclick='startEdit(${JSON.stringify(todo).replace(/'/g,"&#39;")})'>Edit</button>
+            <button class="icon danger" onclick="deleteTodo(${Number(todo.id)})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    const all = Array.isArray(todos) ? todos : [];
+    $('totalCount').textContent = all.length;
+    $('doneCount').textContent = all.filter(x => x.completed === true).length;
+    $('pendingCount').textContent = all.filter(x => x.completed !== true).length;
+  }
+
+  function clearResults() {
+    currentTodos = [];
+    $('todoList').innerHTML = '<div class="empty">Results cleared. Click <b>Refresh All</b> to fetch again.</div>';
+    $('resultBox').textContent = '[]';
+    $('totalCount').textContent = '0';
+    $('doneCount').textContent = '0';
+    $('pendingCount').textContent = '0';
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[c]));
+  }
+
+  async function copyResult() {
+    await navigator.clipboard.writeText($('resultBox').textContent);
+    showToast('Result JSON copied');
+  }
+
+  async function copyResponse() {
+    await navigator.clipboard.writeText($('responseBox').textContent);
+    showToast('Response copied');
+  }
+
+  testConnection();
+  loadTodos(false);
+</script>
+</body>
+</html>
